@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import DateProvider from "../hoc/DateProvider";
 import { DateCalendar } from "@mui/x-date-pickers";
 import { Button, Popover } from "@mui/material";
-import { format, getMonth, setMonth } from "date-fns";
+import { format, getMonth, setMonth, endOfMonth, isAfter, startOfMonth } from "date-fns";
 import { LocaleArrow } from "../common/LocaleArrow";
 import useStore from "../../hooks/useStore";
 
@@ -35,9 +35,37 @@ const MonthDateBtn = ({ selectedDate, onChange }: MonthDateBtnProps) => {
     const nextMonth = currentMonth + 1;
     onChange(setMonth(selectedDate, nextMonth));
   };
+
+  const disabledPrev = useMemo(() => {
+    const minDate = navigationPickerProps?.minDate;
+    if (!minDate) return false;
+
+    const prevMonth = currentMonth - 1;
+    const dateOfPrevMonth = setMonth(selectedDate, prevMonth);
+    const lastDayOfPrevMonth = endOfMonth(dateOfPrevMonth);
+
+    return !isAfter(lastDayOfPrevMonth, minDate);
+  }, [currentMonth, navigationPickerProps?.minDate, selectedDate]);
+
+  const disabledNext = useMemo(() => {
+    const maxDate = navigationPickerProps?.maxDate;
+    if (!maxDate) return false;
+
+    const nextMonth = currentMonth + 1;
+    const dateOfNextMonth = setMonth(selectedDate, nextMonth);
+    const firstDayOfNextMonth = startOfMonth(dateOfNextMonth);
+
+    return isAfter(firstDayOfNextMonth, maxDate);
+  }, [currentMonth, navigationPickerProps?.maxDate, selectedDate]);
+
   return (
     <>
-      <LocaleArrow type="prev" onClick={handlePrev} aria-label="previous month" />
+      <LocaleArrow
+        type="prev"
+        disabled={disabledPrev}
+        onClick={handlePrev}
+        aria-label="previous month"
+      />
       <Button style={{ padding: 4 }} onClick={handleOpen} aria-label="selected month">
         {format(selectedDate, "MMMM yyyy", { locale })}
       </Button>
@@ -60,7 +88,12 @@ const MonthDateBtn = ({ selectedDate, onChange }: MonthDateBtnProps) => {
           />
         </DateProvider>
       </Popover>
-      <LocaleArrow type="next" onClick={handleNext} aria-label="next month" />
+      <LocaleArrow
+        type="next"
+        disabled={disabledNext}
+        onClick={handleNext}
+        aria-label="next month"
+      />
     </>
   );
 };

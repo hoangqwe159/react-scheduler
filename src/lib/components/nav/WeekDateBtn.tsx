@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import DateProvider from "../hoc/DateProvider";
 import { Button, Popover } from "@mui/material";
-import { endOfWeek, format, startOfWeek, addDays } from "date-fns";
+import { endOfWeek, format, startOfWeek, addDays, isAfter } from "date-fns";
 import { WeekProps } from "../../views/Week";
 import { LocaleArrow } from "../common/LocaleArrow";
 import { DateCalendar } from "@mui/x-date-pickers";
@@ -33,8 +33,8 @@ const WeekDateBtn = ({ selectedDate, onChange, weekProps }: WeekDateBtnProps) =>
   };
 
   const handlePrev = () => {
-    const ladtDayPrevWeek = addDays(weekStart, -1);
-    onChange(ladtDayPrevWeek);
+    const lastDayPrevWeek = addDays(weekStart, -1);
+    onChange(lastDayPrevWeek);
   };
 
   const handleNext = () => {
@@ -42,9 +42,30 @@ const WeekDateBtn = ({ selectedDate, onChange, weekProps }: WeekDateBtnProps) =>
     onChange(firstDayNextWeek);
   };
 
+  const disablePrev = useMemo(() => {
+    const minDate = navigationPickerProps?.minDate;
+    if (!minDate) return false;
+
+    const lastDayPrevWeek = addDays(weekStart, -1);
+    return !isAfter(lastDayPrevWeek, minDate);
+  }, [navigationPickerProps?.minDate, weekStart]);
+
+  const disableNext = useMemo(() => {
+    const maxDate = navigationPickerProps?.maxDate;
+    if (!maxDate) return false;
+
+    const firstDayNextWeek = addDays(weekEnd, 1);
+    return isAfter(firstDayNextWeek, maxDate);
+  }, [navigationPickerProps?.maxDate, weekEnd]);
+
   return (
     <>
-      <LocaleArrow type="prev" onClick={handlePrev} aria-label="previous week" />
+      <LocaleArrow
+        type="prev"
+        disabled={disablePrev}
+        onClick={handlePrev}
+        aria-label="previous week"
+      />
       <Button style={{ padding: 4 }} onClick={handleOpen} aria-label="selected week">
         {`${format(weekStart, "dd", { locale })} - ${format(weekEnd, "dd MMM yyyy", {
           locale,
@@ -69,7 +90,7 @@ const WeekDateBtn = ({ selectedDate, onChange, weekProps }: WeekDateBtnProps) =>
           />
         </DateProvider>
       </Popover>
-      <LocaleArrow type="next" onClick={handleNext} aria-label="next week" />
+      <LocaleArrow type="next" disabled={disableNext} onClick={handleNext} aria-label="next week" />
     </>
   );
 };

@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import DateProvider from "../hoc/DateProvider";
 import { DateCalendar } from "@mui/x-date-pickers";
 import { Button, Popover } from "@mui/material";
-import { format, addDays } from "date-fns";
+import { format, addDays, isAfter } from "date-fns";
 import { LocaleArrow } from "../common/LocaleArrow";
 import useStore from "../../hooks/useStore";
 
@@ -35,9 +35,31 @@ const DayDateBtn = ({ selectedDate, onChange }: DayDateBtnProps) => {
     const nexDay = addDays(selectedDate, 1);
     onChange(nexDay);
   };
+
+  const disabledPrev = useMemo(() => {
+    const minDate = navigationPickerProps?.minDate;
+    if (!minDate) return false;
+
+    const prevDay = addDays(selectedDate, -1);
+    return !isAfter(prevDay, minDate);
+  }, [navigationPickerProps?.minDate, selectedDate]);
+
+  const disabledNext = useMemo(() => {
+    const maxDate = navigationPickerProps?.maxDate;
+    if (!maxDate) return false;
+
+    const nextDay = addDays(selectedDate, 1);
+    return isAfter(nextDay, maxDate);
+  }, [navigationPickerProps?.maxDate, selectedDate]);
+
   return (
     <>
-      <LocaleArrow type="prev" onClick={handlePrev} aria-label="previous day" />
+      <LocaleArrow
+        type="prev"
+        disabled={disabledPrev}
+        onClick={handlePrev}
+        aria-label="previous day"
+      />
       <Button style={{ padding: 4 }} onClick={handleOpen} aria-label="selected date">
         {format(selectedDate, "dd MMMM yyyy", { locale })}
       </Button>
@@ -60,7 +82,7 @@ const DayDateBtn = ({ selectedDate, onChange }: DayDateBtnProps) => {
           />
         </DateProvider>
       </Popover>
-      <LocaleArrow type="next" onClick={handleNext} aria-label="next day" />
+      <LocaleArrow type="next" disabled={disabledNext} onClick={handleNext} aria-label="next day" />
     </>
   );
 };
