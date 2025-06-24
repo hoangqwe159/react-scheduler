@@ -106,7 +106,13 @@ const MonthTable = ({ daysList, resource, eachWeekStart }: Props) => {
                     }}
                   >
                     <Typography
-                      color={!isSameMonth(today, monthStart) ? "#ccc" : "textPrimary"}
+                      color={
+                        !isSameMonth(today, monthStart)
+                          ? "#ccc"
+                          : isToday
+                            ? theme.palette.secondary.contrastText
+                            : "textPrimary"
+                      }
                       className={!disableGoToDay ? "rs__hover__op" : ""}
                       onClick={(e) => {
                         e.stopPropagation();
