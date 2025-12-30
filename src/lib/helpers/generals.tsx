@@ -135,7 +135,7 @@ export const convertRRuleDateToDate = (rruleDate: Date) => {
   );
 };
 
-export const getRecurrencesForDate = (event: ProcessedEvent, today: Date, timeZone?: string) => {
+export const getRecurrencesForDate = (event: ProcessedEvent, today: Date) => {
   const duration = differenceInMilliseconds(event.end, event.start);
   if (event.recurring) {
     return event.recurring
@@ -148,10 +148,9 @@ export const getRecurrencesForDate = (event: ProcessedEvent, today: Date, timeZo
           start: start,
           end: addMilliseconds(start, duration),
         };
-      })
-      .map((event) => convertEventTimeZone(event, timeZone));
+      });
   }
-  return [convertEventTimeZone(event, timeZone)];
+  return [event];
 };
 
 export const filterTodayEvents = (
@@ -162,7 +161,8 @@ export const filterTodayEvents = (
   const list: ProcessedEvent[] = [];
 
   for (let i = 0; i < events.length; i++) {
-    for (const rec of getRecurrencesForDate(events[i], today, timeZone)) {
+    const event = convertEventTimeZone(events[i], timeZone);
+    for (const rec of getRecurrencesForDate(event, today)) {
       const isToday =
         !rec.allDay && isSameDay(today, rec.start) && !differenceInDaysOmitTime(rec.start, rec.end);
       if (isToday) {
